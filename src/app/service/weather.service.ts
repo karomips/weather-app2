@@ -1,34 +1,65 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WeatherService {
-  private apiKey = 'dcdf701f709543cc831120205242906';
-  private apiUrl = 'http://api.weatherapi.com/v1/forecast.json';
+  private apiBaseUrl = 'http://localhost/demoproject3/api/';
+  private cache: { [city: string]: BehaviorSubject<any> } = {};
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
+
+  fetchWeather(city: string): Observable<any> {
+    const url = `${this.apiBaseUrl}weather/${city}`;
+    return this.http.get(url).pipe(
+      catchError(this.handleError)
+    );
+  }
 
   searchWeatherByLocation(city: string): Observable<any> {
-    const headers = new HttpHeaders()
-      .set('weatherapi-key', this.apiKey)
-      .set('weatherapi-host', 'api.weatherapi.com');
+    if (!this.cache[city]) {
+      this.cache[city] = new BehaviorSubject<any>(null);
+      this.fetchWeather(city).subscribe(
+        (data) => this.cache[city].next(data),
+        (error) => console.error('Error fetching weather data:', error)
+      );
+    }
+    return this.cache[city].asObservable();
+  }
 
-    const options = { headers };
-    const url = `${this.apiUrl}?key=${this.apiKey}&q=${city}`;
-
-    return this.http.get(url, options);
+  clearCache(city: string) {
+    if (this.cache[city]) {
+      this.cache[city].complete();
+      delete this.cache[city];
+    }
   }
 
   searchWeather(city: string): Observable<any> {
-    const url = `${this.apiUrl}?key=${this.apiKey}&q=${city}&days=5`;
-    return this.http.get(url);
+    const url = `${this.apiBaseUrl}weather/${city}`;
+    return this.http.get(url).pipe(
+      catchError(this.handleError)
+    );
   }
 
   searchWeatherByCoords(latitude: number, longitude: number): Observable<any> {
-    const url = `${this.apiUrl}/forecast.json?key=${this.apiKey}&q=${latitude},${longitude}&days=5`;
-    return this.http.get(url);
+    console.log(`Searching weather by coords: ${latitude}, ${longitude}`);
+    const url = `${this.apiBaseUrl}weather-lat-lon/${latitude}/${longitude}`;
+    return this.http.get(url).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  handleError(error: HttpErrorResponse) {
+    let errorMessage = '';
+    if (error.error instanceof ErrorEvent) {
+      errorMessage = `Client-side error: ${error.error.message}`;
+    } else {
+      errorMessage = `Server-side error: ${error.status} ${error.message}`;
+    }
+    console.error(errorMessage);
+    return throwError(errorMessage);
   }
 }

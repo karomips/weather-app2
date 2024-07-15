@@ -3,15 +3,16 @@
   <app-current-date></app-current-date>
 </div>
 
-<div class="search-container" [formGroup]="searchForm">
-  <input type="text" class="search-input" placeholder="Enter City" formControlName="city">
-  <button class="search-button" (click)="searchWeather()">Search</button>&nbsp;&nbsp;
-  <button class="search-button show-location-button" (click)="showLocation()">Show Current Location</button>
-</div>
-
 <div class="content" *ngIf="weather">
   <div class="row">
+    <br>
     <div class="left-side">
+      <div class="search-container" [formGroup]="searchForm">
+        <input type="text" class="search-input" placeholder="Enter City" formControlName="city">
+        <button class="search-button" (click)="searchWeather()">Search</button>&nbsp;&nbsp;
+        <button class="search-button show-location-button" (click)="showLocation()">Show Current Location</button>
+      </div>
+      <br><br>
       <h1 class="city-name">{{ currentCity }}</h1>
       <div class="image-container">
         <div class="temperature">
@@ -24,6 +25,15 @@
             <option value="fahrenheit">Fahrenheit (°F)</option>
           </select>
         </div>
+      </div>
+
+      <div class="data-options">
+        <label for="dataToShow">Additional data to show:</label>
+        <select id="dataToShow" [(ngModel)]="selectedDataToShow">
+          <option value="heatIndex">Heat Index</option>
+          <option value="windSpeed">Wind Speed</option>
+          <option value="humidity">Humidity</option>
+        </select>
       </div>
 
       <div class="section-2">
@@ -44,11 +54,14 @@
             <p>Weather Condition: {{ weather.current.condition.text }}</p>
           </div>
           <div class="bottom-info">
-            <div class="info-box">
-              <p>Heat Index: {{ weather.current.heatindex_c }}</p>
+            <div class="info-box" *ngIf="selectedDataToShow === 'heatIndex'">
+              <p>Heat Index: {{ weather.current.heatindex_c }}°C</p>
             </div>
-            <div class="info-box">
+            <div class="info-box" *ngIf="selectedDataToShow === 'windSpeed'">
               <p>Wind Speed: {{ weather.current.wind_kph }} kph</p>
+            </div>
+            <div class="info-box" *ngIf="selectedDataToShow === 'humidity'">
+              <p>Humidity: {{ weather.current.humidity }}%</p>
             </div>
           </div>
         </div>
@@ -57,14 +70,14 @@
 
     <div class="right-side" *ngIf="weather">
       <div class="container-row">
-        <div class="smaller-container1" *ngFor="let day of weather.forecast.forecastday">
-          <h3>{{ day.date }}</h3>
+        <div class="smaller-container1" *ngFor="let day of forecast">
+          <h3>Date: {{ day.date }}</h3>
           <p>Max Temperature: {{ selectedTemperatureUnit === 'celsius' ? day.day.maxtemp_c + '°C' : day.day.maxtemp_f + '°F' }}</p>
           <p>Min Temperature: {{ selectedTemperatureUnit === 'celsius' ? day.day.mintemp_c + '°C' : day.day.mintemp_f + '°F' }}</p>
           <p>Condition: {{ day.day.condition.text }}</p>
           <p>Wind Speed: {{ day.day.maxwind_kph }} kph</p>
         </div>
       </div>
-    </div>
+    </div>    
   </div>
 </div>
